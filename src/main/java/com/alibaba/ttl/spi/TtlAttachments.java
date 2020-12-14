@@ -32,6 +32,7 @@ public interface TtlAttachments extends TtlEnhanced {
      * <p>
      * so the value of this attachment is a {@code boolean}.
      *
+     * 标识自动包装的KEY，Agent模式会使用自动包装，这个时候会传入一个附件的K-V，其中KEY就是KEY_IS_AUTO_WRAPPER
      * @since 2.11.0
      */
     String KEY_IS_AUTO_WRAPPER = "ttl.is.auto.wrapper";

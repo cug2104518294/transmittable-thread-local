@@ -112,6 +112,8 @@ import java.util.logging.Level;
  * @see java.util.concurrent.ForkJoinPool
  * @see java.util.TimerTask
  * @since 0.9.0
+ *
+ * 通过Instrumentation回调激发ClassFileTransformer实现目标类的字节码增强，使用到javassist
  */
 public final class TtlAgent {
     /**
@@ -131,18 +133,17 @@ public final class TtlAgent {
         try {
             logger.info("[TtlAgent.premain] begin, agentArgs: " + agentArgs + ", Instrumentation: " + inst);
             final boolean disableInheritableForThreadPool = isDisableInheritableForThreadPool();
-
+            // 装载所有的JavassistTransformlet
             final List<JavassistTransformlet> transformletList = new ArrayList<JavassistTransformlet>();
             transformletList.add(new TtlExecutorTransformlet(disableInheritableForThreadPool));
             transformletList.add(new TtlForkJoinTransformlet(disableInheritableForThreadPool));
-            if (isEnableTimerTask()) transformletList.add(new TtlTimerTaskTransformlet());
-
+            if (isEnableTimerTask()) {
+                transformletList.add(new TtlTimerTaskTransformlet());
+            }
             final ClassFileTransformer transformer = new TtlTransformer(transformletList);
             inst.addTransformer(transformer, true);
             logger.info("[TtlAgent.premain] addTransformer " + transformer.getClass() + " success");
-
             logger.info("[TtlAgent.premain] end");
-
             ttlAgentLoaded = true;
         } catch (Exception e) {
             String msg = "Fail to load TtlAgent , cause: " + e.toString();

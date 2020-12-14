@@ -8,6 +8,8 @@ package com.alibaba.ttl;
  * @see TransmittableThreadLocal.Transmitter#capture()
  * @author Jerry Lee (oldratlee at gmail dot com)
  * @since 2.11.0
+ *
+ * 函数式接口，TTL拷贝器
  */
 @FunctionalInterface
 public interface TtlCopier<T> {
@@ -24,6 +26,8 @@ public interface TtlCopier<T> {
      * @see TransmittableThreadLocal.Transmitter#registerThreadLocal(ThreadLocal, TtlCopier)
      * @see TransmittableThreadLocal.Transmitter#registerThreadLocalWithShadowCopier(ThreadLocal)
      * @see TransmittableThreadLocal.Transmitter#unregisterThreadLocal
+     *
+     * 拷贝父属性
      */
     T copy(T parentValue);
 }

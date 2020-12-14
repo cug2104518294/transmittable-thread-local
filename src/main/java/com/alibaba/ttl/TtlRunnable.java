@@ -34,11 +34,15 @@ import static com.alibaba.ttl.TransmittableThreadLocal.Transmitter.*;
  * @since 0.9.0
  */
 public final class TtlRunnable implements Runnable, TtlWrapper<Runnable>, TtlEnhanced, TtlAttachments {
+    // 存放从父线程捕获得到的线程本地变量映射的备份
     private final AtomicReference<Object> capturedRef;
+    // 原始的Runable实例
     private final Runnable runnable;
+    // 执行之后是否释放TTL值引用
     private final boolean releaseTtlValueReferenceAfterRun;
 
     private TtlRunnable(@NonNull Runnable runnable, boolean releaseTtlValueReferenceAfterRun) {
+        // 这里关键点：TtlRunnable实例化的时候就已经进行了线程本地变量的捕获，所以一定是针对父线程的，因为此时任务还没提交到线程池
         this.capturedRef = new AtomicReference<Object>(capture());
         this.runnable = runnable;
         this.releaseTtlValueReferenceAfterRun = releaseTtlValueReferenceAfterRun;
@@ -49,15 +53,18 @@ public final class TtlRunnable implements Runnable, TtlWrapper<Runnable>, TtlEnh
      */
     @Override
     public void run() {
+        // 获取父线程捕获到的线程本地变量映射的备份，做一些前置判断
         final Object captured = capturedRef.get();
         if (captured == null || releaseTtlValueReferenceAfterRun && !capturedRef.compareAndSet(captured, null)) {
             throw new IllegalStateException("TTL value reference is released after run!");
         }
-
+        // 重放操作
         final Object backup = replay(captured);
         try {
+            // 真正的Runnable调用
             runnable.run();
         } finally {
+            // 复原操作
             restore(backup);
         }
     }
@@ -84,11 +91,13 @@ public final class TtlRunnable implements Runnable, TtlWrapper<Runnable>, TtlEnh
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         TtlRunnable that = (TtlRunnable) o;
-
         return runnable.equals(that.runnable);
     }
 
@@ -140,12 +149,17 @@ public final class TtlRunnable implements Runnable, TtlWrapper<Runnable>, TtlEnh
      */
     @Nullable
     public static TtlRunnable get(@Nullable Runnable runnable, boolean releaseTtlValueReferenceAfterRun, boolean idempotent) {
-        if (null == runnable) return null;
+        if (null == runnable) {
+            return null;
+        }
 
         if (runnable instanceof TtlEnhanced) {
             // avoid redundant decoration, and ensure idempotency
-            if (idempotent) return (TtlRunnable) runnable;
-            else throw new IllegalStateException("Already TtlRunnable!");
+            if (idempotent) {
+                return (TtlRunnable) runnable;
+            } else {
+                throw new IllegalStateException("Already TtlRunnable!");
+            }
         }
         return new TtlRunnable(runnable, releaseTtlValueReferenceAfterRun);
     }

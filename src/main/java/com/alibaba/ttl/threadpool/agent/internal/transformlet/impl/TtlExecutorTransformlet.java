@@ -58,24 +58,29 @@ public class TtlExecutorTransformlet implements JavassistTransformlet {
     @Override
     public void doTransform(@NonNull final ClassInfo classInfo) throws IOException, NotFoundException, CannotCompileException {
         final CtClass clazz = classInfo.getCtClass();
+        // 如果当前加载的类包含java.util.concurrent.ThreadPoolExecutor或者java.util.concurrent.ScheduledThreadPoolExecutor
         if (EXECUTOR_CLASS_NAMES.contains(classInfo.getClassName())) {
+            // 遍历所有的方法进行增强
+
             for (CtMethod method : clazz.getDeclaredMethods()) {
                 updateSubmitMethodsOfExecutorClass_decorateToTtlWrapperAndSetAutoWrapperAttachment(method);
             }
-
-            if (disableInheritableForThreadPool) updateConstructorDisableInheritable(clazz);
-
+            if (disableInheritableForThreadPool) {
+                updateConstructorDisableInheritable(clazz);
+            }
             classInfo.setModified();
         } else {
             if (clazz.isPrimitive() || clazz.isArray() || clazz.isInterface() || clazz.isAnnotation()) {
                 return;
             }
-            if (!clazz.subclassOf(clazz.getClassPool().get(THREAD_POOL_EXECUTOR_CLASS_NAME))) return;
-
+            if (!clazz.subclassOf(clazz.getClassPool().get(THREAD_POOL_EXECUTOR_CLASS_NAME))) {
+                return;
+            }
             logger.info("Transforming class " + classInfo.getClassName());
-
             final boolean modified = updateBeforeAndAfterExecuteMethodOfExecutorSubclass(clazz);
-            if (modified) classInfo.setModified();
+            if (modified) {
+                classInfo.setModified();
+            }
         }
     }
 

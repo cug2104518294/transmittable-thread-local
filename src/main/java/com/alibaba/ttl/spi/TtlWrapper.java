@@ -25,7 +25,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public interface TtlWrapper<T> extends TtlEnhanced {
     /**
      * unwrap {@link TtlWrapper} to the original/underneath one.
-     *
+     * 返回解包装实例，实际是就是原始实例
      * @see TtlUnwrap#unwrap(Object)
      */
     @NonNull

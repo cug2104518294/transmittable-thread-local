@@ -53,17 +53,18 @@ public class TtlTransformer implements ClassFileTransformer {
             final String className = toClassName(classFile);
 
             ClassInfo classInfo = new ClassInfo(className, classFileBuffer, loader);
-
+            // 这里做变量，如果字节码被修改，则跳出循环返回
             for (JavassistTransformlet transformlet : transformletList) {
                 transformlet.doTransform(classInfo);
-                if (classInfo.isModified()) return classInfo.getCtClass().toBytecode();
+                if (classInfo.isModified()) {
+                    return classInfo.getCtClass().toBytecode();
+                }
             }
         } catch (Throwable t) {
             String msg = "Fail to transform class " + classFile + ", cause: " + t.toString();
             logger.log(Level.SEVERE, msg, t);
             throw new IllegalStateException(msg, t);
         }
-
         return NO_TRANSFORM;
     }
 
